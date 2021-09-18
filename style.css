@@ -1,5 +1,103 @@
 body {
-  width: 100%;
-  margin: 0;
-  overflow: hidden;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+h1 {
+  background-color: rgb(18, 6, 71);
+  float: left !important;
+}
+
+.navPane {
+  background-color: yellow;
+}
+
+.left {
+  float: left !important;
+}
+
+#like_button {
+  margin-left: auto;
+  margin-right: auto;
+  color: rgb(211, 161, 12);
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+  font-weight: bold;
+  margin-top: 30px;
+}
+
+#likes {
+  margin-bottom: 150px;
+}
+
+.Calculator {
+  border-radius: 9px;
+  margin-left: auto;
+  margin-right: auto;
+  background: rgb(63, 63, 63);
+  border: 1px solid rgb(0, 0, 0);
+  height: 280px;
+  width: 180px;
+  margin-top: 70px;
+  padding-top: 5px;
+  padding-left: 9px;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+}
+
+#CalcDisplay {
+  border-radius: 9px;
+  text-align: right;
+  text-align: right;
+  background-color: rgb(146, 173, 123);
+  border: 1px solid rgb(0, 0, 0);
+  line-height: 38px;
+  margin-left: 1px;
+  margin-top: 1px;
+  margin-bottom: 5px;
+  height: 60px;
+  width: 158px;
+  font-size: 16px;
+  font-weight: bold;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+}
+
+.calc_button {
+  border-radius: 4px;
+  background: rgb(211, 211, 212);
+  border: 1px solid rgb(0, 0, 0);
+  float: left;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 38px;
+  height: 38px;
+  margin-left: 1px;
+  margin-right: 1px;
+  margin-top: 1px;
+  padding: 0;
+  text-align: center;
+  width: 38px;
+}
+#calcEquals {
+  background: rgb(211, 211, 212);
+  border: 1px solid rgb(0, 0, 0);
+  float: left;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 38px;
+  height: 38px;
+  margin-right: 1px;
+  margin-top: 1px;
+  padding: 0;
+  text-align: center;
+  width: 78px;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+}
+
+.calc_button:after {
+  content: "";
+}
+
+.CalcRow:after {
+  clear: both;
+  content: "";
+  display: table;
 }
