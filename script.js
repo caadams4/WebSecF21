@@ -17,6 +17,7 @@ const firebaseConfig = {
   measurementId: "G-KVM4FVRTY8"
 };
 
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 let db = rtdb.getDatabase(app);
