@@ -43,25 +43,23 @@ let pushChat = function() {
   let message = document.querySelector("#dbInput").value;
   let newMessage = {"message": message}
   rtdb.push(chatRef,newMessage);
-  displayChat();
+  updateChat();
 }
 
-
-let displayChat = function() {
+let updateChat = function() {
 document.querySelector("#chatBox").innerText= "";
 rtdb.onValue(chatRef, ss=>{
   let data = ss.val();
-    //{"-Mjt7_Cqam6Qk5MNZc8t":{"message":"Message 1"}}
-  
-ss.forEach(function(item){
-  console.log("made it")
-  let chat = JSON.stringify(item.val().message);
-  console.log(chat);
-  $("#chatBox").append('<ul>' + chat +'</ul>');
+  ss.forEach(function(item){
+    console.log("made it")
+    let chat = JSON.stringify(item.val().message);
+    console.log(chat);
+    $("#chatBox").append('<ul>' + chat +'</ul>');
   })
 })
 }
              
+updateChat();
 
 //      let msg = data[akey];
 //      alert("ln2")
