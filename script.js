@@ -24,22 +24,22 @@ let titleRef = rtdb.ref(db, "/");
 let chatRef = rtdb.child(titleRef,"chat");
 
 let validateInput = function() {
-  let err = false;
-  let errorMsg = "";
-  if (document.querySelector("#dbAlias").value === "") {
-    errorMsg += "Please enter an alias! ";
-    err = true;
-  } if (document.querySelector("#dbInput").value === "") {
-    errorMsg += "Please enter a message! ";
-    err = true;
-  } if (err === true) {
-    alert(errorMsg);
-    err = false;
-    return false;
-  } else {
-    alert("yee")
-    return true;
-  }
+let err = false;
+let errorMsg = "";
+if (document.querySelector("#dbAlias").value === "") {
+  errorMsg += "Please enter an alias! ";
+  err = true;
+} if (document.querySelector("#dbInput").value === "") {
+  errorMsg += "Please enter a message! ";
+  err = true;
+} 
+if (err === true) {
+  alert(errorMsg);
+  err = false;
+  return false;
+} else {
+  return true;
+}
 }
 
 let pushChat = function() {
@@ -49,7 +49,6 @@ let pushChat = function() {
   rtdb.push(chatRef,newMessage);
   document.querySelector("#dbInput").innerText= "";
 }
-
 
 rtdb.onValue(chatRef, ss=>{
 document.querySelector("#chatBox").innerText= "";
@@ -63,18 +62,19 @@ ss.forEach(function(item){
   })
 })
 
-
-
 document.querySelector("#dbInput").addEventListener('keyup',function(e) {
 if (e.key === 'Enter') {
   if (validateInput() === true) {
     pushChat();
+    document.querySelector("#dbInput").value = ""
   }
 }
 });
+
 document.querySelector("#inputBtn").addEventListener('click',function(e) {
 if (validateInput() === true) {
   pushChat();
+  document.querySelector("#dbInput").value = ""
 }
 });
 
