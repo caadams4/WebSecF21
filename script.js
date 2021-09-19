@@ -23,6 +23,25 @@ let db = rtdb.getDatabase(app);
 let titleRef = rtdb.ref(db, "/");
 let chatRef = rtdb.child(titleRef,"chat");
 
+let validateInput = function() {
+  let err = false;
+  let errorMsg = "";
+  if (document.querySelector("#dbAlias").value === "") {
+    errorMsg += "Please enter an alias! ";
+    err = true;
+  } if (document.querySelector("#dbInput").value === "") {
+    errorMsg += "Please enter a message! ";
+    err = true;
+  } if (err === true) {
+    alert(errorMsg);
+    err = false;
+    return false;
+  } else {
+    alert("yee")
+    return true;
+  }
+}
+
 let pushChat = function() {
   let message = document.querySelector("#dbInput").value;
   let alias = document.querySelector("#dbAlias").value;
@@ -47,14 +66,15 @@ ss.forEach(function(item){
 
 
 document.querySelector("#dbInput").addEventListener('keyup',function(e) {
-    if (e.key === 'Enter') {
-      pushChat();
-          document.querySelector("#dbInput").innerText= "";
-}});
+if (e.key === 'Enter') {
+  if (validateInput() === true) {
+    pushChat();
+  }
+}
+});
 document.querySelector("#inputBtn").addEventListener('click',function(e) {
-        pushChat();
-    document.querySelector("#dbInput").innerText= "";
+if (validateInput() === true) {
+  pushChat();
+}
 });
 
-//Object.keys(thedata).map(akey=>{ let msg=thedata[akey]})
-  
