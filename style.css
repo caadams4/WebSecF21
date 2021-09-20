@@ -1,7 +1,7 @@
-body {
+.black {
   background-repeat: no-repeat;
   background-size: cover;
-  background-color: rgb(53, 53, 53);
+  background-color: black;
 }
 
 h1 {
@@ -44,18 +44,17 @@ h1 {
   font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
 }
 
-#CalcDisplay {
+.chat {
   border-radius: 9px;
-  text-align: right;
-  text-align: right;
-  background-color: rgb(146, 173, 123);
-  border: 1px solid rgb(0, 0, 0);
+  background-color: blue;
+  text-align: left;
+  border: 2px solid white;
   line-height: 38px;
   margin-left: 1px;
   margin-top: 1px;
   margin-bottom: 5px;
-  height: 60px;
-  width: 158px;
+  height: 80px;
+  width: 1200px;
   font-size: 16px;
   font-weight: bold;
   font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
@@ -75,7 +74,7 @@ h1 {
   margin-top: 1px;
   padding: 0;
   text-align: center;
-  width: 38px;
+  width: 200px;
 }
 #calcEquals {
   background: rgb(211, 211, 212);

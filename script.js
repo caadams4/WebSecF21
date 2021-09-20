@@ -21,7 +21,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 let db = rtdb.getDatabase(app);
 let titleRef = rtdb.ref(db, "/");
-let chatRef = rtdb.child(titleRef,"chat");
+let chatRef = rtdb.child(titleRef,"chat/");
+let myID = "";
 
 let validateInput = function() {
 let err = false;
@@ -44,22 +45,45 @@ if (err === true) {
 
 let pushChat = function() {
   let message = document.querySelector("#dbInput").value;
-  let alias = document.querySelector("#dbAlias").value;
-  let newMessage = {"message": message, "sender": alias}
+  let myID = document.querySelector("#dbAlias").value;
+  let timeStamp = Date().valueOf();
+  let newMessage = {
+    "message" : message,
+    "senderID" : myID,
+    "reactions" : "add it later",
+    "timeStamp" : timeStamp,
+    "edited" : false,
+  }
   rtdb.push(chatRef,newMessage);
   document.querySelector("#dbInput").innerText= "";
 }
 
+let clickHandler = function (event) {
+let clickedElement = evt.currentTarget;
+let idFromDOM = $(clickedElement).attr("data-id");
+
+
+}
+
+let renderMessages = function (chatObj) { //takes in onValue pulled JSON 
+$("#chatBox").empty();
+let chatIds = Object.keys(chatObj);     //assigns keys to chatIds
+chatIds.map((msgIds)=>{ 
+  let messageObj = chatObj[msgIds];     //creates map of chat ids
+//    if (myID === messageObj.senderID) {
+    $("#chatBox").append(
+    `<div class="chat" data-id=${msgIds}>
+      ${messageObj.senderID}: ${messageObj.message} <br> at ${messageObj.timeStamp}
+    </div>`
+    );
+//    }
+});
+$(".chat").click(clickHandler)
+}
+
+
 rtdb.onValue(chatRef, ss=>{
-document.querySelector("#chatBox").innerText= "";
-let data = ss.val();
-ss.forEach(function(item){
-    console.log("made it")
-    let chat = JSON.stringify(item.val().message);
-    let sender = JSON.stringify(item.val().sender);
-    console.log(chat);
-    $("#chatBox").append('<ul>' + sender + ": " + chat +'</ul>' + '<br>');
-  })
+renderMessages(ss.val());
 })
 
 document.querySelector("#dbInput").addEventListener('keyup',function(e) {
