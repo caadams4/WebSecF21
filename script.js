@@ -151,19 +151,18 @@ if (!!rules){
 })
 
 fbauth.onAuthStateChanged(auth, user => {
-    if (!!user){
-      $("#login").hide();
-      $("#app").show();
-      renderUser(user);
-      let flagRef = rtdb.ref(db, "/flag");
-      $("#login_module").hide();
+  if (!!user){
+    $("#messageStack").show();
+    renderUser(user);
+    let flagRef = rtdb.ref(db, "/flag");
+    $("#login_module").hide();
 rtdb.onValue(flagRef, ss=>{
 alert(ss.val());
 })
-    } else {
-      $("#login_module").show();
-
-    }
+  } else {
+    $("#messageStack").hide();
+    $("#login_module").show();
+  }
 });
 
 let renderUser = function(userObj){
