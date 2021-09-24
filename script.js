@@ -156,9 +156,6 @@ fbauth.onAuthStateChanged(auth, user => {
     renderUser(user);
     let flagRef = rtdb.ref(db, "/flag");
     $("#login_module").hide();
-rtdb.onValue(flagRef, ss=>{
-alert(ss.val());
-})
   } else {
     $("#messageStack").hide();
     $("#login_module").show();
