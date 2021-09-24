@@ -162,7 +162,7 @@ rtdb.onValue(flagRef, ss=>{
 alert(ss.val());
 })
     } else {
-      $("#login").show();
+      $("#login_module").show();
       $("#app").html("");
     }
 });
