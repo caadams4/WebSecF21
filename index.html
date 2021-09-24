@@ -12,13 +12,26 @@
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
             <link rel="stylesheet" type="text/css" href="style.css">
         </header>
-
+        <div id="login">
+            <h2> Register :
+                <input type="text" id="regemail" placeholder="Register Email"/>
+                <input type="password" id="regpass1" placeholder="Register Password"/>
+                <input type="password" id="regpass2" placeholder="Confirm Password"/>
+                <input type="text" id="uid" placeholder="Chat ID"/>
+                <button type="button" id="register">Click Here To Register</button>
+              <br>
+              Login :
+                <input type="text" id="logemail" placeholder="Login with Email"/>
+                <input type="password" id="logpass" placeholder="Login Password"/>
+                <button type="button" id="login">Click Here To Login</button>
+            </h2>
+          </div>
+          <hr>
         <div class="container align-center text-white">
-            <div>
-                Alias:<br>
-                <input id="dbAlias">
-            </div>  
-        
+            <div class="container align-center">
+                <div>
+                  <div id="whoIsUser"> Not logged in. Please log in or register to enter a chat</div>
+                </div>  
           
           <div>
             Message:<br>

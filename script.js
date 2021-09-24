@@ -4,6 +4,9 @@ import * as rtdb from"https://www.gstatic.com/firebasejs/9.0.2/firebase-database
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
+import * as fbauth from "https://www.gstatic.com/firebasejs/9.0.2/firebase-auth.js";
+
+
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -13,24 +16,27 @@ const firebaseConfig = {
   projectId: "fob-alpha",
   storageBucket: "fob-alpha.appspot.com",
   messagingSenderId: "180202800618",
-  appId: "1:180202800618:web:f5c8b13450717e6f891e93",
-  measurementId: "G-KVM4FVRTY8"
+  appId: "1:180202800618:web:a0cb94b6daf74032891e93",
+  measurementId: "G-QQ3WEGCDRN"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+let auth = fbauth.getAuth(app);
 let db = rtdb.getDatabase(app);
 let titleRef = rtdb.ref(db, "/");
 let chatRef = rtdb.child(titleRef,"chat/");
 let myID = "";
 
+const user = {
+  senderID: "",
+  message: ""
+};
+
 let validateInput = function() {
 let err = false;
 let errorMsg = "";
-if (document.querySelector("#dbAlias").value === "") {
-  errorMsg += "Please enter an alias! ";
-  err = true;
-} if (document.querySelector("#dbInput").value === "") {
+ if (document.querySelector("#dbInput").value === "") {
   errorMsg += "Please enter a message! ";
   err = true;
 } 
@@ -44,12 +50,11 @@ if (err === true) {
 }
 
 let pushChat = function() {
-  let message = document.querySelector("#dbInput").value;
-  let myID = document.querySelector("#dbAlias").value;
+  user.message = document.querySelector("#dbInput").value;
   let timeStamp = Date().valueOf();
   let newMessage = {
-    "message" : message,
-    "senderID" : myID,
+    "message" : user.message,
+    "senderID" : user.senderID,
     "reactions" : "add it later",
     "timeStamp" : timeStamp,
     "edited" : false,
@@ -60,9 +65,7 @@ let pushChat = function() {
 
 let clickHandler = function (event) {
 let clickedElement = evt.currentTarget;
-let idFromDOM = $(clickedElement).attr("data-id");
-
-
+let idFromDOM = $(clickedElement).attr("data-id"); 
 }
 
 let renderMessages = function (chatObj) { //takes in onValue pulled JSON 
@@ -73,7 +76,7 @@ chatIds.map((msgIds)=>{
 //    if (myID === messageObj.senderID) {
     $("#chatBox").append(
     `<div class="chat" data-id=${msgIds}>
-      ${messageObj.senderID}: ${messageObj.message} <br> at ${messageObj.timeStamp}
+      ${messageObj.senderID}:  ${messageObj.message} <br> at ${messageObj.timeStamp}
     </div>`
     );
 //    }
@@ -101,4 +104,90 @@ if (validateInput() === true) {
   document.querySelector("#dbInput").value = ""
 }
 });
+
+$("#register").on("click", ()=>{
+let email = $("#regemail").val();
+let p1 = $("#regpass1").val();
+let p2 = $("#regpass2").val();
+if (p1 != p2){
+  alert("Passwords don't match");
+  return;
+}
+fbauth.createUserWithEmailAndPassword(auth, email, p1).then(somedata=>{
+  let uid = somedata.user.uid;
+  let userRoleRef = rtdb.ref(db, `/users/${uid}/roles/user`);
+  rtdb.set(userRoleRef, true);
+}).catch(function(error) {
+  // Handle Errors here.
+  var errorCode = error.code;
+  var errorMessage = error.message;
+  console.log(errorCode);
+  console.log(errorMessage);
+});
+});
+
+$("#login").on("click", ()=>{
+let email = $("#logemail").val();
+let pwd = $("#logpass").val();
+fbauth.signInWithEmailAndPassword(auth, email, pwd).then(
+  somedata=>{
+    console.log(somedata);
+  }).catch(function(error) {
+    // Handle Errors here.
+    var errorCode = error.code;
+    var errorMessage = error.message;
+    console.log(errorCode);
+    console.log(errorMessage);
+  });
+});
+
+let rulesRef = rtdb.ref(db, "/rules");
+
+rtdb.onValue(rulesRef, ss=>{
+let rules = ss.val();
+if (!!rules){
+  $("#rules").html(rules);
+}
+})
+
+fbauth.onAuthStateChanged(auth, user => {
+    if (!!user){
+      $("#login").hide();
+      $("#app").show();
+      alert(JSON.stringify(user.email));
+      renderUser(user);
+      let flagRef = rtdb.ref(db, "/flag");
+      console.log("here");
+rtdb.onValue(flagRef, ss=>{
+alert(ss.val());
+})
+    } else {
+      $("#login").show();
+      $("#app").html("");
+    }
+});
+
+let renderUser = function(userObj){
+let usrName = userObj.email;
+$("#app").html(JSON.stringify(userObj));
+$("#whoIsUser").html(
+  `<div id="whoIsUser"> 
+    Logged in as: ${usrName}<button type="button" id="logout">Logout</button> 
+  </div>`
+);
+$("#logout").on("click", ()=>{
+  $("#whoIsUser").html(
+  `<div id="whoIsUser"> 
+    Not logged in. Please log in or register to enter a chat
+  </div>`);
+  fbauth.signOut(auth);
+})
+return newUser(userObj);
+}
+
+let newUser = function(userObj){
+let msg = document.querySelector("#dbInput").value;
+user.msg = msg;
+user.senderID = userObj.email;
+}
 
