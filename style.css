@@ -1,11 +1,14 @@
-#h1 {
+#header {
   background-color: salmon;
   color: black;
-
   text-align: center;
 }
 
-#login_module {
+#chatBox {
+  color: black;
+}
+
+.login_module {
   background-color: black;
   color: salmon;
   text-color: salmon;
@@ -15,8 +18,8 @@
 
 .bodystyle {
   background-color: black;
+  color: salmon;
 }
-
 .left {
   float: left !important;
 }
@@ -50,7 +53,7 @@
 
 .chat {
   border-radius: 9px;
-  background-color: blue;
+  background-color: salmon;
   text-align: left;
   border: 2px solid white;
   line-height: 38px;
