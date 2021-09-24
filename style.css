@@ -1,22 +1,25 @@
-.black {
-  background-repeat: no-repeat;
-  background-size: cover;
+#h1 {
+  background-color: salmon;
+  color: black;
+
+  text-align: center;
+}
+
+#login_module {
   background-color: black;
+  color: salmon;
+  text-color: salmon;
+  font-size: 16px;
+  padding-left: 30px;
 }
 
-h1 {
-  background-color: rgb(18, 6, 71);
-  float: left !important;
-}
-
-.navPane {
-  background-color: yellow;
+.bodystyle {
+  background-color: black;
 }
 
 .left {
   float: left !important;
 }
-
 #like_button {
   margin-left: auto;
   margin-right: auto;
