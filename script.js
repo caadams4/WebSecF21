@@ -63,10 +63,10 @@ let pushChat = function() {
   document.querySelector("#dbInput").innerText= "";
 }
 
-//let clickHandler = function (event) {
-//  let clickedElement = evt.currentTarget;
-//  let idFromDOM = $(clickedElement).attr("data-id"); 
-//}
+let clickHandler = function (event) {
+  let clickedElement = evt.currentTarget;
+  let idFromDOM = $(clickedElement).attr("data-id"); 
+}
 
 let renderMessages = function (chatObj) { //takes in onValue pulled JSON 
 $("#chatBox").empty();
