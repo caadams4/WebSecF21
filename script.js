@@ -26,7 +26,11 @@ let auth = fbauth.getAuth(app);
 let db = rtdb.getDatabase(app);
 let titleRef = rtdb.ref(db, "/");
 let chatRef = rtdb.child(titleRef,"chat/");
+let userRef = rtdb.child(titleRef,"users/");
+
 let myID = "";
+
+
 
 const user = {
   senderID: "",
@@ -58,30 +62,29 @@ let pushChat = function() {
     "reactions" : "add it later",
     "timeStamp" : timeStamp,
     "edited" : false,
+    "RBAC" : "role coming soon"
   }
   rtdb.push(chatRef,newMessage);
   document.querySelector("#dbInput").innerText= "";
 }
 
-//let clickHandler = function (event) {
-// let clickedElement = evt.currentTarget;
+//  let clickHandler = function (event) {
+//  let clickedElement = evt.currentTarget;
 //  let idFromDOM = $(clickedElement).attr("data-id"); 
 //}
 
 let renderMessages = function (chatObj) { //takes in onValue pulled JSON 
 $("#chatBox").empty();
-let chatIds = Object.keys(chatObj);     //assigns keys to chatIds
-chatIds.map((msgIds)=>{ 
-  let messageObj = chatObj[msgIds];     //creates map of chat ids
-//    if (myID === messageObj.senderID) {
+let chatIds = Object.keys(chatObj);   
+chatIds.map((messageId)=>{ 
+  let messageObj = chatObj[messageId];  
     $("#chatBox").append(
-    `<div class="chat" data-id=${msgIds}>
+    `<div class="chat" data-id=${messageId}>
       ${messageObj.senderID}:  ${messageObj.message} <br> at ${messageObj.timeStamp}
     </div>`
     );
-//    }
 });
-//$(".chat").click(clickHandler)
+$(".chat").click(clickHandlerMessage)
 }
 
 
@@ -116,7 +119,9 @@ if (p1 != p2){
 fbauth.createUserWithEmailAndPassword(auth, email, p1).then(somedata=>{
   let uid = somedata.user.uid;
   let userRoleRef = rtdb.ref(db, `/users/${uid}/roles/user`);
+  let userNameRef = rtdb.ref(db, `/users/${uid}/name`);
   rtdb.set(userRoleRef, true);
+  rtdb.set(userNameRef, somedata.user.email);
 }).catch(function(error) {
   // Handle Errors here.
   var errorCode = error.code;
@@ -151,15 +156,16 @@ if (!!rules){
 })
 
 fbauth.onAuthStateChanged(auth, user => {
-  if (!!user){
-    $("#messageStack").show();
-    renderUser(user);
-    let flagRef = rtdb.ref(db, "/flag");
-    $(".login_module").hide();
-  } else {
-    $("#messageStack").hide();
-    $(".login_module").show();
-  }
+    if (!!user){
+      $("#messageStack").show();
+      renderUser(user);
+      let flagRef = rtdb.ref(db, "/flag");
+      $(".login_module").hide();
+
+    } else {
+      $("#messageStack").hide();
+      $(".login_module").show();
+    }
 });
 
 let renderUser = function(userObj){
@@ -184,5 +190,92 @@ let newUser = function(userObj){
 let msg = document.querySelector("#dbInput").value;
 user.msg = msg;
 user.senderID = userObj.email;
+console.log(JSON.stringify(userObj));
+}
+
+
+//functions for admin console on page
+
+
+
+let renderUsers = function (rbacObject) { //takes in onValue pulled JSON 
+$("#rbacConsole").empty();
+let userIds = Object.keys(rbacObject);
+userIds.map((users)=>{ 
+    let userObj = rbacObject[users];
+    let admin = ""
+    if (userObj.roles.admin) {
+    admin = ", admin";
+    }
+    $("#rbacConsole").append(
+    `<div class="users" user-id=${users}>
+    ${userObj.name} : Group(s) : user${admin}
+    </div>`
+    )
+});
+  $(".users").click(clickHandlerGroups)
+}
+
+//let userIds = Object.keys(rbacObject);
+//  userIds.map((users)=>{ 
+//      let userObj = rbacObject[users];
+//      let admin = ""
+//      if (userObj.roles.admin) {
+//      admin = ", admin";
+//      }
+
+let addRemove = function(adminChange) {
+      let roleRef = rtdb.child(userRef, `${adminChange}/roles`);
+      rtdb.get(roleRef).then(ss=>{
+        if (ss.val().admin === false) {        
+         // rtdb.update(roleRef, {"admin": true});
+          return;
+        } else {
+        //  rtdb.update(roleRef, {"admin": false});
+          return;
+        }
+      })
+    }    
+      
+
+rtdb.onValue(userRef, ss=>{
+renderUsers(ss.val());
+});
+
+let clickHandlerGroups = function(evt){
+let clickedElement = evt.currentTarget;
+let userIdFromDOM = $(clickedElement).attr("user-id");
+$(clickedElement).append(`
+    <button admin-change=${userIdFromDOM} data-done=${userIdFromDOM}>Add/Remove Admin</button>
+`);
+$(`[data-done=${userIdFromDOM}]`).on("click", (evt)=>{
+  addRemove(userIdFromDOM);
+  $(`[data-done=${userIdFromDOM}]`).remove();
+});
+}
+
+let sendEdit = function(msgid, msgup, userid){
+console.log(msgid, msgup, userid);
+//let chatsRef = "fake";
+
+let msgRef = rtdb.child(chatRef, msgid);
+rtdb.update(msgRef, {"edited": true, "message": msgup});
+}
+
+let clickHandlerMessage = function(evt){
+let clickedElement = evt.currentTarget;
+let idFromDOM = $(clickedElement).attr("data-id");
+$(clickedElement).after(`
+  <input type="text" 
+    data-edit=${idFromDOM} 
+    class="msgedit" 
+    placeholder="Edit Your message"/>
+  <button data-done=${idFromDOM}>Send Edit</button>`);
+$(`[data-done=${idFromDOM}]`).on("click", (evt)=>{
+  let editedMsg = $(`[data-edit=${idFromDOM}]`).val();
+  sendEdit(idFromDOM, editedMsg, user.senderID);
+  $(`[data-edit=${idFromDOM}]`).remove();
+  $(`[data-done=${idFromDOM}]`).remove();
+});
 }
 
