@@ -30,7 +30,7 @@ h1 {
 }
 
 #chatBox {
-    color: black;
+  color: black;
 }
 
 .login_module {
@@ -92,7 +92,7 @@ h1 {
 }
 
 .msgFromNotMe {
-  margin-bottom; 25px;
+  margin-bottom: 25px;
   color: white;
   text-align: left;
   font-size: 14px;
