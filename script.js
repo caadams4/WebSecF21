@@ -31,7 +31,10 @@ let userRef = rtdb.child(titleRef,"users/");
 let myID = "";
 
 //TODO Come up with a UI Design
-  //Left Sliding pane -> Admin console and server display
+  //Left Sliding pane -> User display and server display
+    //User display -> onClick -- message other user -or- if admin, toggle admin
+    //Server display -- enter server
+
   //Middle pane -> Message window that defaults display to bottom of the messages (scrolling)
 
 //TODO Enable hosting single page app
@@ -201,8 +204,8 @@ let renderUser = function(userObj){
 let usrName = userObj.email;
 $("#app").html(JSON.stringify(userObj));
 $("#whoIsUser").html(
-  `<div id="whoIsUser"> 
-    Logged in as: ${usrName}<button type="button" id="logout">Logout</button> 
+  `<div id="whoIsUser" > 
+   <b> Logged in as: ${usrName} </b><button type="button" id="logout">Logout</button> 
   </div>`
 );
 $("#logout").on("click", ()=>{
@@ -238,7 +241,7 @@ userIds.map((users)=>{
     }
     $("#rbacConsole").append(
     `<div class="users" user-id=${users}>
-    ${userObj.name} : Group(s) : user${admin}
+    ${userObj.name}: user${admin}
     </div>`
     )
 });
