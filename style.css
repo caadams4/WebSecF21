@@ -30,7 +30,7 @@ h1 {
 }
 
 #chatBox {
-  color: black;
+    color: black;
 }
 
 .login_module {
@@ -44,15 +44,57 @@ h1 {
   border-radius: 9px;
   background-color: green;
   color: black;
-  text-align: left;
-  border: 5px solid tan;
-  line-height: 38px;
   margin-left: 1px;
   margin-top: 1px;
-  margin-bottom: 5px;
   height: 80px;
-  width: 1200px;
   font-size: 16px;
   font-weight: bold;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+  padding: 10px;
+  width: fit-content;
+  min-width: 10px;
+  max-width: 450px;
+  min-height: 15px;
+  height: fit-content;
+  margin-bottom: 20px;
+  margin-top: 10px;
+  overflow-wrap: break-word;
+}
+
+.myChat {
+  border-radius: 9px;
+  background-color: tan;
+  color: black;
+  text-align: right;
+  margin-left: auto;
+  margin-right: 1px;
+  margin-top: 1px;
+  margin-bottom: 20px;
+  height: 80px;
+  font-size: 16px;
+  font-weight: bold;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+  padding: 10px;
+  width: fit-content;
+  min-width: 10px;
+  max-width: 450px;
+  min-height: 15px;
+  height: fit-content;
+  overflow-wrap: break-word;
+}
+
+.msgFromMe {
+  margin-bottom: 25px;
+  color: white;
+  text-align: right;
+  font-size: 14px;
+  font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
+}
+
+.msgFromNotMe {
+  margin-bottom; 25px;
+  color: white;
+  text-align: left;
+  font-size: 14px;
   font-family: "Gill Sans", "Gill Sans MT", Calibri, "Trebuchet MS", sans-serif;
 }

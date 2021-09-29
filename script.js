@@ -5,7 +5,7 @@ import * as rtdb from"https://www.gstatic.com/firebasejs/9.0.2/firebase-database
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 import * as fbauth from "https://www.gstatic.com/firebasejs/9.0.2/firebase-auth.js";
-
+import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/9.0.2/firebase-auth.js";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -30,6 +30,18 @@ let userRef = rtdb.child(titleRef,"users/");
 
 let myID = "";
 
+//TODO Come up with a UI Design
+  //Left Sliding pane -> Admin console and server display
+  //Middle pane -> Message window that defaults display to bottom of the messages (scrolling)
+
+//TODO Enable hosting single page app
+
+//TODO Add hot reloading
+
+//TODO Set up Admin toggle
+  //admin rules to toggle
+
+//
 
 
 const user = {
@@ -77,12 +89,28 @@ let renderMessages = function (chatObj) { //takes in onValue pulled JSON
 $("#chatBox").empty();
 let chatIds = Object.keys(chatObj);   
 chatIds.map((messageId)=>{ 
-  let messageObj = chatObj[messageId];  
-    $("#chatBox").append(
-    `<div class="chat" data-id=${messageId}>
-      ${messageObj.senderID}:  ${messageObj.message} <br> at ${messageObj.timeStamp}
+  let messageObj = chatObj[messageId];
+  if (messageObj.senderID === user.senderID) {
+          $("#chatBox").append(
+    `<div class="myChat" data-id=${messageId}>
+      ${messageObj.message}
+    </div>
+    <div class="msgFromMe">
+      From: ${messageObj.senderID} on ${messageObj.timeStamp}
     </div>`
     );
+  } else {
+    $("#chatBox").append(
+    `<div>
+      <div class="chat" data-id=${messageId}>
+              ${messageObj.message}
+      </div>
+      <div class="msgFromNotMe">
+         From: ${messageObj.senderID} on ${messageObj.timeStamp}
+      </div>
+     </div>`
+    );
+  }
 });
 $(".chat").click(clickHandlerMessage)
 }
@@ -134,6 +162,7 @@ fbauth.createUserWithEmailAndPassword(auth, email, p1).then(somedata=>{
 $("#login").on("click", ()=>{
 let email = $("#logemail").val();
 let pwd = $("#logpass").val();
+user.senderID = email;
 fbauth.signInWithEmailAndPassword(auth, email, pwd).then(
   somedata=>{
     console.log(somedata);
@@ -278,4 +307,6 @@ $(`[data-done=${idFromDOM}]`).on("click", (evt)=>{
   $(`[data-done=${idFromDOM}]`).remove();
 });
 }
+
+
 
