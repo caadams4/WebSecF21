@@ -49,7 +49,8 @@ let myID = "";
 
 const user = {
   senderID: "",
-  message: ""
+  message: "",
+  login: false
 };
 
 let validateInput = function() {
@@ -160,11 +161,13 @@ fbauth.createUserWithEmailAndPassword(auth, email, p1).then(somedata=>{
   console.log(errorCode);
   console.log(errorMessage);
 });
+location.reload(true);
 });
 
 $("#login").on("click", ()=>{
 let email = $("#logemail").val();
 let pwd = $("#logpass").val();
+user.login = true;
 user.senderID = email;
 fbauth.signInWithEmailAndPassword(auth, email, pwd).then(
   somedata=>{
@@ -176,6 +179,7 @@ fbauth.signInWithEmailAndPassword(auth, email, pwd).then(
     console.log(errorCode);
     console.log(errorMessage);
   });
+location.reload(true);
 });
 
 let rulesRef = rtdb.ref(db, "/rules");
@@ -190,13 +194,14 @@ if (!!rules){
 fbauth.onAuthStateChanged(auth, user => {
     if (!!user){
       $("#messageStack").show();
-      renderUser(user);
-      let flagRef = rtdb.ref(db, "/flag");
+      $(".sidebarCont").show();
       $(".login_module").hide();
-
+      renderUser(user);
     } else {
+      $(".sidebarCont").hide();
       $("#messageStack").hide();
       $(".login_module").show();
+      
     }
 });
 
@@ -310,6 +315,3 @@ $(`[data-done=${idFromDOM}]`).on("click", (evt)=>{
   $(`[data-done=${idFromDOM}]`).remove();
 });
 }
-
-
-
