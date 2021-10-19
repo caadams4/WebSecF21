@@ -22,6 +22,8 @@ let email = "";
 let existingServers = [];
 let existingChannels = [];
 let existingUsers = [];
+let serverUsers = [];
+let editing;
 
 const app = initializeApp(firebaseConfig);
 let auth = fbauth.getAuth(app);
@@ -32,10 +34,28 @@ let userRef = rtdb.child(titleRef,"users/");
 
 
 
+rtdb.onValue(userRef,ss=>{
+    $("#flatEarthers").empty();
+    existingUsers = [];
+    let userList = ss.val();
+    let userIds = Object.keys(userList);
+    userIds.map((users)=>{ 
+      let userObj = userList[users];
+      let userDB = {
+        username: userObj.name,
+        uid: users,
+        admin: userObj.roles.admin
+      }
+      existingUsers = existingUsers.concat(userDB);
+    });
+    renderUsers();
+  });
+
+
 fbauth.onAuthStateChanged(auth, user => {
       if (!!user){ 
+        let myusername;
         uid = user.uid;
-        console.log(uid)
         let pageUser = {
           email: user.email,
           uid: user.uid,
@@ -47,17 +67,19 @@ fbauth.onAuthStateChanged(auth, user => {
         rtdb.get(myUserRef).then(ss=>{
           pageUser.server = ss.val().server;
           pageUser.channel = ss.val().channel;
-          pageUser.userName = ss.val().name;
-          username = pageUser.name;
+          username = ss.val().name;
+          myusername = ss.val().name;
           currentChannel = pageUser.channel;
           currentServer = pageUser.server;
-          renderServers();
+          pageUpdate(currentServer,username);
+          renderChannels();
+          renderWhoAmI();
           renderMessages(uid);
-          renderUsers();
-          renderAdminTools();
+
         });
         $("#login_register_module").css({"display":"none"}); 
         $("#chat_module").css({"display":"contents"}); 
+
       } else {
         $("#chat_module").css({"display":"none"});
         $("#whoIsUser").html("Logged in as : ")
@@ -65,23 +87,76 @@ fbauth.onAuthStateChanged(auth, user => {
       }  
 });
 
-//TODO Get array of user names
-  rtdb.onValue(userRef, ss=>{
-  let userList  = ss.val();
-  $("#flatEarthers").empty();
-  let userIds = Object.keys(userList);
-  userIds.map((users)=>{
-    let userObj = userList[users];
-    existingUsers = existingUsers.concat(userObj.name);
-    console.log(existingUsers)
+let pageUpdate = function (currentServer,myusername) {
+  let serverRef = rtdb.ref(db,`/chatServers/${currentServer}/members/`);
+  let channelRef = rtdb.ref(db,`/chatServers/${currentServer}/channels/`);
+
+    $("#whoAmI").empty();
+    $("#whoAmI").append(
+      `<div>
+        Logged in as : ${myusername}
+      </div>`
+     )
+
+  
+  //list users in server
+  rtdb.onValue(serverRef,ss=>{
+    serverUsers = [];
+    let userList = ss.val();
+    let userIds = Object.keys(userList);
+    userIds.map((users)=>{ 
+      let userObj = userList[users];
+      let serverUser = {
+        username: userObj.username,
+        uid: userObj.uid,
+      }
+      serverUsers = serverUsers.concat(serverUser);
+    });
+    renderUsersInServer("");
   });
-});
+  
+  //TODO Get array of channels
+  rtdb.onValue(channelRef, ss=>{
+    existingChannels = [];
+    let channelList  = ss.val();
+    let channelIds = Object.keys(channelList);
+    channelIds.map((chans)=>{
+      let chanObj = channelList[chans];
+      let addChan = {
+        chanName: chanObj.chanName,
+        chanID: chans
+      }
+      existingChannels = existingChannels.concat(addChan);
+    });
+      renderChannels(currentServer);
+  });
+  
+  rtdb.onValue(chatRef, ss=>{
+    existingServers = [];
+    let serverList  = ss.val();
+    let serverIds = Object.keys(serverList);
+    serverIds.map((servs)=>{
+      let serverObj = serverList[servs];
+      
+      let addServer = {
+        servName: serverObj.servName,
+        servID: servs
+      }
+      existingServers = existingServers.concat(addServer);
+    });
+     renderServers();
+  });
+
+  renderAdminTools();
+
+}
 
 
-//TODO Get array of channels
+$("#logout").on("click", ()=>{
 
-//TODO Get array of servers
+  fbauth.signOut(auth);
 
+})
 
 
 $("#loginBtn").on("click", ()=>{
@@ -103,15 +178,28 @@ $("#loginBtn").on("click", ()=>{
 $("#registerBtn").on("click", ()=>{
   email = $("#regemail").val();
   username = $("#regdisplay").val();
+  let userAlreadyExists;
+  existingUsers.forEach(user=>{
+    if (username === user.username) {
+      userAlreadyExists = true;
+    }
+  })
+  if (userAlreadyExists === true) {
+    alert("User already exists");
+    return;
+  } else {
+  
+  
   let p1 = $("#regpass1").val();
   let p2 = $("#regpass2").val();
   if (p1 != p2){
     alert("Passwords don't match");
     return;
   }
+  
   fbauth.createUserWithEmailAndPassword(auth, email, p1).then(somedata=>{
     uid = somedata.user.uid
-    currentServer = "server1";
+    currentServer = "General Chat";
     currentChannel = "general";
     let newUser = {
       roles: {
@@ -124,6 +212,8 @@ $("#registerBtn").on("click", ()=>{
       server: currentServer,
       channel: currentChannel
       }
+    let messageRef = rtdb.child(titleRef,`chatServers/-MmKuzfOiBRFV6EHOiWW/members/`);
+    rtdb.push(messageRef,{"uid": uid,"username":username})
     let newUserRef = rtdb.ref(db,`/users/${uid}/`)
     rtdb.set(newUserRef,newUser);
   }).catch(function(error) {
@@ -142,75 +232,85 @@ $("#registerBtn").on("click", ()=>{
   renderUsers();
   $("#login_register_module").css({"display":"none"});
   $("#chat_module").css({"display":"contents"});
-});
-$("#logout").on("click", ()=>{
-  fbauth.signOut(auth);
-  $("#loggedInAs").empty();
-  $("#loggedInAs").append(`
-      <div id="whoIsUser">
-        Logged in as :  
-      </div>`)
-});
+}});
 
-let renderUsers = function () { //takes in onValue pulled JSON 
-  rtdb.onValue(userRef, ss=>{
-  let userList  = ss.val();
-  $("#flatEarthers").empty();
-  let userIds = Object.keys(userList);
-  userIds.map((users)=>{
-    let userObj = userList[users];
-    if (userObj.roles.admin === true) {
-    $("#flatEarthers").append(
-      `<div class="users" data-id=${users}>
-        ${userObj.name} - Admin <div button-id=${users}}></div>
-      </div>`
-    )
-  }});
-  userIds.map((users)=>{ 
-    let userObj = userList[users];
-    if (userObj.roles.admin !== true) {
-    $("#flatEarthers").append(
-      `<div class="users" data-id=${users}>
-        ${userObj.name}
-      </div>`
-    )
-  }});
-  $(".users").click(clickHandlerUser);
-  });
-}
+
+let renderUsers = function () { //takes in onValue pulled JSON
+  let isAdmin = false;
+      existingUsers.forEach(user=>{
+        if (user.admin === true) {
+          $("#flatEarthers").append(
+            `<div class="users" data-id=${user.uid}>
+              ${user.username} - Admin <div button-id=${user.uid}}></div>
+            </div>`
+        )}
+        $(".users").click(clickHandlerUser);
+        })
+        existingUsers.forEach(user=>{                  
+          if (user.admin !== true) {
+            $("#flatEarthers").append(
+            `<div class="users" data-id=${user.uid}>
+              ${user.username}<div button-id=${user.uid}}></div>
+            </div>`
+          )}
+          $(".users").click(clickHandlerUser);
+        })
+    }
+
+
 let clickHandlerUser = function (evt) {
-let clickedElement = evt.currentTarget;
+  
+  let clickedElement = evt.currentTarget;
   let idFromDOM = $(clickedElement).attr("data-id");
+  let clickedUserRef = rtdb.child(titleRef,`users/${idFromDOM}`);
   let userInQuestion = idFromDOM;
+  let myUserRef = rtdb.child(titleRef,`users/${uid}/roles/admin`);
+  rtdb.get(myUserRef).then(admin=>{
+    if (admin.val() === true) {
+
+  rtdb.get(clickedUserRef).then(ss=>{ 
+          $("#userControl").empty();
+            if(ss.val().roles.admin === true) {
+              $("#userControl").append(
+              `<div class="users" >
+                ${ss.val().name}<button class="adminPriv" data-id="${ss.key}" type="button" id="killadmin">Remove Admin?</button>
+              </div>`
+            )} else {
+              $("#userControl").append(
+              `<div class="users">
+                ${ss.val().name} - Admin <button class="adminPriv" data-id=${ss.key} type="button" id="makeadmin">Add Admin?</button>
+              </div>`
+            )}
+          $(".adminPriv").click(clickHandlerAdminPriv);
+    })
+   }
+ })
+}
+let clickHandlerAdminPriv = function (evt) {
+  let clickedElement = evt.currentTarget;
+  let idFromDOM = $(clickedElement).attr("data-id");
+  let action = $(clickedElement).html();
+  let userInQuestion = idFromDOM;
+  let clickedUserRef = rtdb.child(userRef,`/${idFromDOM}/roles/admin`);
+  let userChannelRef = rtdb.child(userRef,`/${uid}/channel`);
+  rtdb.set(userChannelRef, idFromDOM);
+  let myUserRef = rtdb.child(titleRef,`users/${uid}/roles/admin`);
+  if (action === "Add Admin?") {
+      rtdb.set(clickedUserRef, true);
+      $("#userControl").empty(); 
+    } else {
+      rtdb.set(clickedUserRef, false);
+      $("#userControl").empty();
+    }
+  pageUpdate();
+}
+
+
+
+let renderAdminTools = function () {
   let myUserRef = rtdb.child(titleRef,`users/${uid}/roles/admin`);
   rtdb.get(myUserRef).then(ss=>{
     if (ss.val() === true) {
-    let clickedUserRef = rtdb.child(titleRef,`users/${idFromDOM}`);
-    rtdb.get(clickedUserRef).then(ss=>{
-      if(ss.val().roles.admin === true) {
-        $("#userControl").empty();
-        $("#userControl").append(
-        `<div class="users" >
-          ${ss.val().name}<button data-id=${ss} type="button" id="killadmin">Remove Admin?</button>
-        </div>`
-      )
-        $(".users").click(clickHandlerUser);
-      } else {
-        $("#userControl").empty();
-        $("#userControl").append(
-        `<div class="users" data-id=${ss}>
-          ${ss.val().name} - Admin <button  data-id=${ss} type="button" id="makeadmin">Add Admin?</button>
-        </div>`
-      )
-      $(".users").click(clickHandlerUser);
-    }})
-  }})
-}
-
-let renderAdminTools = function () {
-  let myUserRef = rtdb.child(titleRef,`users/${uid}`);
-  rtdb.get(myUserRef).then(ss=>{
-    if (ss.val().roles.admin === true) {
     $("#adminToolServer").empty();
     $("#adminToolServer").append(
       `<div class="adminTool"}>
@@ -247,20 +347,29 @@ let renderAdminTools = function () {
         `<option id=${userObj.name} data-id=${users}>${userObj.name}</option>` 
         )
       })
+
+    })
+    }
     $("#newServBtn").click(clickHandlerNewServ);
     $("#newChanBtn").click(clickHandlerNewChan);
     $("#addUserBtn").click(clickHandlerAddUser);
-    })
-    }
   })
 
 }
 
 
 let newServ = function(serverName) {
-    let myUserRef = rtdb.child(titleRef,`users/${uid}`);
-
-  if (servExists !== false) {
+  let myUserRef = rtdb.child(titleRef,`users/${uid}`);
+  let servExists;
+  existingServers.forEach(server=>{
+    if (serverName === server.servName) {
+      servExists = true;
+    }
+  })
+  if (servExists === true) {
+    alert("Server already exists");
+    return;
+  } else {
     rtdb.get(myUserRef).then(ss=>{
     let newServer = {
       "servName" : serverName,
@@ -289,177 +398,169 @@ let newServ = function(serverName) {
   }  
 let clickHandlerNewServ = function () {
   let serverName = $("#newServer").val();
-  newServ(serverName);
-        
+  newServ(serverName);    
 }
-$("#newServBtn").on("click", ()=>{
-  let useractiveRef = rtdb.ref(db, `/users/${email}/lastActive`);
-  rtdb.set(useractiveRef, getTime());
-  fbauth.signInWithEmailAndPassword(auth, email, pwd).then(
-    somedata=>{
-      console.log(somedata);
-    }).catch(function(error) {
-      // Handle Errors here.
-      var errorCode = error.code;
-      var errorMessage = error.message;
-      console.log(errorCode);
-      console.log(errorMessage);
-    });
-});
 
-
-$("#killadmin").on("click", ()=>{
-  let idFromDOM = $("#killadmin").attr("data-id");
-  let clickedUserRef = rtdb.child(titleRef,`users/${idFromDOM}/roles/admin`);
-  rtdb.set(clickedUserRef, false);
-  $("#userControl").empty();
-  
-}); // TODO NOT REGISTERING CLICK
-$("#makeadmin").on("click", ()=>{
-  let idFromDOM = $("#makeadmin").attr("data-id");
-  let clickedUserRef = rtdb.child(titleRef,`users/${idFromDOM}/roles/admin`);
-  rtdb.set(clickedUserRef, true);
-  $("#userControl").empty();  
-}); // TODO NOT REGISTERING CLICK
 
 let clickHandlerServer = function(evt){
   let clickedElement = evt.currentTarget;
   let idFromDOM = $(clickedElement).attr("data-id");
   currentServer = idFromDOM;
-  let serverRef = rtdb.child(titleRef,`chatServers/${currentServer}/members/`);
-  let channelRef = rtdb.child(titleRef,`chatServers/${currentServer}/channels/`);
-  let messageRef = rtdb.child(titleRef,`chatServers/${currentServer}/${currentChannel}/`);
   let userServerRef = rtdb.child(userRef,`${uid}/server`);
   let userChannelRef = rtdb.child(userRef,`${uid}/channel`);
-  rtdb.set(userServerRef, idFromDOM);
-  rtdb.set(userChannelRef, "general");
+  let serverRef = rtdb.ref(db,`/chatServers/${currentServer}/members/`);
   currentChannel = "general";
-  renderServers();
-  renderMessages(uid);
+  let memberOf = false;
+    rtdb.get(serverRef).then(ss=>{
+    serverUsers = [];
+    let userList = ss.val();
+    let userIds = Object.keys(userList);
+    userIds.map((users)=>{ 
+      let userObj = userList[users];
+      let serverUser = {
+        username: userObj.username,
+        uid: userObj.uid,
+      }
+      serverUsers = serverUsers.concat(serverUser);
+    });
+    let userRoleRef = rtdb.child(userRef,`${uid}/roles/admin`);
+    serverUsers.forEach(user=>{
+      rtdb.get(userRoleRef).then(ss=>{
+        if (user.uid === uid || ss.val() === true) {
+          memberOf = true;
+          rtdb.set(userServerRef, idFromDOM);
+          rtdb.set(userChannelRef, "general");
+          pageUpdate(currentServer);
+          renderMessages(uid);
+          renderUsersInServer("");
+      }   
+      })
+    })
+  });  
 } // switch cahnnels on click based on uid
 let renderServers = function () {
-    $("#servers").empty();
+    let passingServ;
     let userServerRef = rtdb.child(userRef,`${uid}/server`);
     rtdb.get(userServerRef).then(serv=>{
-    rtdb.get(chatRef).then(ss=>{
-      let serverObj = ss.val() 
-      let serverIds = Object.keys(serverObj);
-      serverIds.map((servs)=>{
-        let passingServ;
-        if (JSON.stringify(serv) !== JSON.stringify(servs)) {
+        $("#servers").empty();
+        existingServers.forEach(server=>{
+          if (server.servID === serv.val()) {
           $("#servers").append(
-            `<div class="servers" data-id=${servs}>
-              ${serverObj[servs].servName}
+            `<div class="servers" data-id=${server.servID} style="color:rgb(0,255,0)">
+              ${server.servName}
             </div>`)
-        } else {
-          $("#servers").append(
-          `<div class="servers" data-id=${servs} style="color:rgb(0,255,0)">
-            ${serverObj[servs].servName}
-          </div>`)
-        }
-      })
+            passingServ = server.servName;
+          } else {
+            $("#servers").append(
+            `<div class="servers" data-id=${server.servID}>
+              ${server.servName}
+            </div>`)
+          }
+          
+        })
       $(".servers").click(clickHandlerServer);
-      renderChannels(serv.val());
-      renderUsersInServer(serv.val())
-    }) 
+      renderChannels();
+
   })
 }
 
-let clickHandlerNewChan = function () {
+
+let newChan = function () {
   let channelName = $("#newChannel").val();
   let myUserRef = rtdb.child(titleRef,`users/${uid}`);
-  rtdb.get(myUserRef).then(ss=>{
-
+  let chanExists;
+  
+  existingChannels.forEach(channel=>{
+    console.log(channelName)
+    console.log(channel.chanName)
+    if (channelName === channel.chanName) {
+      chanExists = true;
+    }
+  })
+   if (chanExists === true) {
+    alert("Channel already exists");
+    return;
+  } else {
+    rtdb.get(myUserRef).then(ss=>{
     let servUser = ss.val().server; //get the user's server id Key to ref inside of that server
-    
-    console.log(servUser)
-    
-          let newChannel = {
+      let newChannel = {
             "chanName" : channelName,
-            "messageID" : {
-            "edited" : false,
-            "message" : "beep - boop : Welcome to the new channel!",
-            "senderID" : "R2-D2",
-            "timeStamp" : new Date().getTime()
-            }
-          }
-          
+            
+      }
     let channelRef = rtdb.child(titleRef,`chatServers/${servUser}/channels/`);
     rtdb.push(channelRef,newChannel);   
-    
+    renderChannels();
     });
-      
+  }
 }
+let clickHandlerNewChan = function () {
+  let channelName = $("#newChannel").val();
+  newChan(channelName);    
+}
+
 let clickHandlerChannel = function(evt){
   let clickedElement = evt.currentTarget;
   let idFromDOM = $(clickedElement).attr("data-id");
   currentChannel = idFromDOM;
   let userChannelRef = rtdb.child(userRef,`/${uid}/channel`);
   rtdb.set(userChannelRef, idFromDOM);
-  renderChannels(currentServer);
+  renderChannels();
   renderMessages(uid);
 } // switch cahnnels on click based on uid
-let renderChannels = function (serv) {
-  
-      let userChannelRef = rtdb.child(userRef,`${uid}/channel`);
-      rtdb.get(userChannelRef).then(chan=>{   // getting user channel. will render green, then render messages based on server and channel
-        
-        let renderChannelRef = rtdb.child(titleRef,`chatServers/${serv}/channels`); 
-        rtdb.onValue(renderChannelRef, ss=>{  // getting db channels of passed in server
-        
-          let channelObj = ss.val();
-          $("#channels").empty();   
-          let channelIds = Object.keys(channelObj);
-          channelIds.map((chans)=>{ 
-            
-            if (chan.val() === chans) {
+
+let renderChannels = function (currentServer) {
+    let userChannelRef = rtdb.child(userRef,`${uid}/channel`);
+    rtdb.get(userChannelRef).then(chan=>{
+        $("#channels").empty();
+        existingChannels.forEach(channel=>{
+          if (channel.chanID === chan.val()) {
               $("#channels").append(
-              `<div class="channels" data-id=${chans} style="color:rgb(0,255,0)">
-                ${channelObj[chans].chanName}
+              `<div class="channels" data-id=${channel.chanID} style="color:rgb(0,255,0)">
+                ${channel.chanName}
               </div>`
             )} else {
             $("#channels").append(
-              `<div class="channels" data-id=${chans}>
-                ${channelObj[chans].chanName}
+              `<div class="channels" data-id=${channel.chanID}>
+                ${channel.chanName}
               </div>`
             )}
           })
         $(".channels").click(clickHandlerChannel);
-      })
-    })
+        })
   }
 
-let renderUsersInServer = function (servs) {
+
+let renderUsersInServer = function (doNotRender) {
       $("#serverUsers").empty();   
-      let serverRef = rtdb.ref(db,`/chatServers/${servs}/members/`);
-      rtdb.onValue(serverRef,ss=>{
-        let userList = ss.val();
-        let userIds = Object.keys(userList);
-        userIds.map((users)=>{ 
-        let userObj = userList[users];
-          $("#serverUsers").append(
-          `<div class="serverUsers" id="${userObj.uid}" data-id=${userObj.uid}>
-            ${userObj.username}
+      serverUsers.forEach(user=>{
+        if(user.uid !== doNotRender) {
+        $("#serverUsers").append(
+          `<div class="serverUsers" id="${user.uid}" data-id=${user.uid}>
+            ${user.username}
           </div>`
           )
-        }); 
-        $(`.serverUsers`).click(clickHandlerServerUserRemove);
-      });   
-}
+          $(`.serverUsers`).click(clickHandlerServerUserRemove);
+        }
+    })
+      
+}   
 let clickHandlerServerUserRemove = function (evt) {
-  
   let clickedElement = evt.currentTarget;
   let idFromDOM = $(clickedElement).attr("data-id");
   let username = $(clickedElement).html();
-  $("#userControl").empty();
-  $("#userControl").append(          
-    `<div class="serverUsers" >
-      ${username} <button data-id="${idFromDOM}" type="button" id="rmUserBtn">Kick from server</button>
-    </div>`)
-  $(`#rmUserBtn`).click(clickUserRemove);
+  let myUserRef = rtdb.child(titleRef,`users/${uid}`);
+  rtdb.get(myUserRef).then(ss=>{
+    if (ss.val().roles.admin === true) {
+        $("#userControl").empty();
+        $("#userControl").append(          
+        `<div class="serverUsers" >
+          ${username} <button data-id="${idFromDOM}" type="button" id="rmUserBtn">Kick from server</button>
+        </div>`)
+        $(`#rmUserBtn`).click(clickUserRemove);
+    } 
+  });
 } // onclick, create button in control panel to remove user from server
 let clickUserRemove = function (evt) {
-  $("#serverUsers").empty();
   let clickedElement = evt.currentTarget;
   let idFromDOM = $(clickedElement).attr("data-id");
   let memberRef = rtdb.child(titleRef,`chatServers/${currentServer}/members/`);
@@ -474,12 +575,23 @@ let clickUserRemove = function (evt) {
         }
       })         
   })
-  $("#serverUsers").empty();
   $("#userControl").empty();
+  renderUsersInServer(idFromDOM);
 }
 let clickHandlerAddUser = function () {
   let messageRef = rtdb.child(titleRef,`chatServers/${currentServer}/members/`);
   let newUser = $("#addUserDropdown").val();
+  let userAlreadyInServer;
+  
+  serverUsers.forEach(user=>{
+    if (newUser === user.username) {
+      userAlreadyInServer = true;
+    }
+  })
+  if (userAlreadyInServer === true) {
+    alert("User is already a member");
+    return;
+  } else {
   let newUserID = $(`#${newUser}`).attr("data-id");
   let myUserRef = rtdb.child(userRef,`${uid}/`);
   let user = {
@@ -489,15 +601,12 @@ let clickHandlerAddUser = function () {
   $("#serverUsers").empty();
   let memberRef = rtdb.ref(db,`/chatServers/${currentServer}/members/`);
   rtdb.push(memberRef,user);
+  renderUsersInServer();
+  }
 }
 
-
-
-
-
-
 let renderMessages = function (myUID) {
-  let messageRef = rtdb.child(titleRef,`chatServers/${currentServer}/channels/${currentChannel}/`);
+  let messageRef = rtdb.child(titleRef,`chatServers/${currentServer}/channels/${currentChannel}/messages`);
   rtdb.onValue(messageRef,ss=>{
     let servChanMsgObj = ss.val();
     $(".msgList").empty();   
@@ -505,28 +614,41 @@ let renderMessages = function (myUID) {
     messageIds.map((msg)=>{
     let msg1 = servChanMsgObj[msg];
     if (myUID === msg1.senderID) {
-    $(".msgList").append(
-      `<div class="messagesFromMe" data-id=${msg}>
-        Transmission from: ${msg1.senderName}<br>
-        ${msg1.message}
-      </div>`);
+      if (msg1.edited === true) {
+        $(".msgList").append(
+          `<div class="messagesFromMe" data-id=${msg}>
+            -Edited-Transmission from: ${msg1.senderName} at ${msg1.timeStamp}:<br>
+            ${msg1.message}
+          </div>`);
+      } else {
+        $(".msgList").append(
+          `<div class="messagesFromMe" data-id=${msg}>
+          Transmission from: ${msg1.senderName} at ${msg1.timeStamp}:<br>
+          ${msg1.message}
+        </div>`);
+    }} else {
+      if (msg1.edited === true) {
+        $(".msgList").append(
+          `<div class="messagesNotFromMe" data-id=${msg}>
+            Edited-Transmission from: ${msg1.senderName} at ${msg1.timeStamp}:<br>
+            ${msg1.message}
+          </div>`);
     } else {
-    $(".msgList").append(
-      `<div class="messagesNotFromMe" data-id=${msg}>
-        Transmission from: ${msg1.senderName}<br>
-        ${msg1.message}
-      </div>`);
-    }
+        $(".msgList").append(
+          `<div class="messagesNotFromMe" data-id=${msg}>
+            Edited-Transmission from: ${msg1.senderName} at ${msg1.timeStamp}:<br>
+            ${msg1.message}
+          </div>`);
+    }}
+    $(`.messagesFromMe`).click(clickHandlerEditMsg);  
   });
-  
   });
 }
 let pushChat = function () {
-  
-  let messageRef = rtdb.child(titleRef,`chatServers/${currentServer}/channels/${currentChannel}`);
+  let messageRef = rtdb.child(titleRef,`chatServers/${currentServer}/channels/${currentChannel}/messages`);
   let message = $("#incomingMsg").val();
   $("#incomingMsg").empty();
-  let x = new Date().getTime()
+  let x = Date().valueOf();
   let myUserRef = rtdb.ref(db,`/users/${uid}`)
   rtdb.get(myUserRef).then(ss=>{
     username = ss.val().name;
@@ -548,7 +670,26 @@ $("#btnIncomingMsg").click(()=>{
   pushChat();  
 })
 
-
-
-
-
+let clickHandlerEditMsg = function (evt) {
+  if (editing !== true) {
+    let clickedElement = evt.currentTarget;
+    let idFromDOM = $(clickedElement).attr("data-id");
+    $(clickedElement).append(`
+    <input type="text" 
+      data-edit=${idFromDOM} 
+      class="msgedit" 
+      placeholder="Edit message"/>
+    <button data-done=${idFromDOM}>Send Edit</button>`);
+    editing = true;
+    $(`[data-done=${idFromDOM}]`).on("click", (evt)=>{
+    let editedMsg = $(`[data-edit=${idFromDOM}]`).val();
+    sendEdit(idFromDOM, editedMsg, Date().valueOf()); 
+    $(`[data-edit=${idFromDOM}]`).remove();
+    }
+  )};
+}
+  
+let sendEdit = function(msgid, msgup, time) {
+    let messageRef = rtdb.child(titleRef,`chatServers/${currentServer}/channels/${currentChannel}/messages/${msgid}`);
+    rtdb.update(messageRef, {"edited": true, "message": msgup, "timeStamp": time});
+}  
