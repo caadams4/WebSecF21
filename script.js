@@ -620,12 +620,14 @@ let renderMessages = function (myUID) {
             -Edited-Transmission from: ${msg1.senderName} at ${msg1.timeStamp}:<br>
             ${msg1.message}
           </div>`);
+          $(`.messagesFromMe`).click(clickHandlerEditMsg);
       } else {
         $(".msgList").append(
           `<div class="messagesFromMe" data-id=${msg}>
           Transmission from: ${msg1.senderName} at ${msg1.timeStamp}:<br>
           ${msg1.message}
         </div>`);
+        $(`.messagesFromMe`).click(clickHandlerEditMsg);
     }} else {
       if (msg1.edited === true) {
         $(".msgList").append(
@@ -633,14 +635,16 @@ let renderMessages = function (myUID) {
             Edited-Transmission from: ${msg1.senderName} at ${msg1.timeStamp}:<br>
             ${msg1.message}
           </div>`);
+          $(`.messagesFromMe`).click(clickHandlerEditMsg);
     } else {
         $(".msgList").append(
           `<div class="messagesNotFromMe" data-id=${msg}>
             Edited-Transmission from: ${msg1.senderName} at ${msg1.timeStamp}:<br>
             ${msg1.message}
           </div>`);
+          $(`.messagesFromMe`).click(clickHandlerEditMsg);
     }}
-    $(`.messagesFromMe`).click(clickHandlerEditMsg);  
+      
   });
   });
 }
